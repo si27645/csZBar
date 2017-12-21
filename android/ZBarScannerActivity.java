@@ -408,18 +408,46 @@ implements SurfaceHolder.Callback {
                 SymbolSet syms = scanner.getResults();
                 for (Symbol sym : syms) {
                     qrValue = sym.getData();
-
+		  if(sym.getType()!=Symbol.QRCODE) { // we don't need this in QR codes
+                       BarCodes.add(qrValue);
+                       Redundancy_Check();
+                       break;
+                    }else
+                    {
                     // Return 1st found QR code value to the calling Activity.
                     Intent result = new Intent ();
                     result.putExtra(EXTRA_QRVALUE, qrValue);
                     setResult(Activity.RESULT_OK, result);
                     finish();
+		    }
                 }
 
             }
         }
     };
-
+    
+    private ArrayList<String> BarCodes = new ArrayList<String>();
+    private int numOfTries=0;
+    private void Redundancy_Check(){
+        // tired of getting partial reads
+        if(BarCodes.size()>2 )
+        {
+            numOfTries++;
+            if(BarCodes.get(BarCodes.size()-1).equals(BarCodes.get(BarCodes.size()-2)) && BarCodes.get(BarCodes.size()-2).equals(BarCodes.get(BarCodes.size()-3) )) {
+                Intent result = new Intent();
+                result.putExtra(EXTRA_QRVALUE, BarCodes.get(BarCodes.size()-1));
+                setResult(Activity.RESULT_OK, result);
+                finish();
+            }
+            if(numOfTries>10)
+            {
+                Intent result = new Intent();
+                result.putExtra(EXTRA_QRVALUE,  "max number of tries reached");
+                setResult(Activity.RESULT_CANCELED,result);
+                finish();
+            }
+        }
+    }
     // Misc ------------------------------------------------------------
 
     // finish() due to error
